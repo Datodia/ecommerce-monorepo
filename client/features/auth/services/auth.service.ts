@@ -16,7 +16,7 @@ type SignInPayload = {
 type SignUpPayload = {
 	email: string;
 	password: string;
-	fullname: string;
+	fullName: string;
 };
 
 const normalizeTokens = (response: AuthResponse): AuthTokens => {

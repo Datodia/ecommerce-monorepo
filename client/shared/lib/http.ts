@@ -82,9 +82,18 @@ class HttpClient {
 		if (!response.ok) {
 			let message = response.statusText;
 			try {
-				const errorData = await response.json();
-				if (errorData.error) message = errorData.error;
-				else if (errorData.message) message = errorData.message;
+				const errorData = (await response.json()) as {
+					message?: string | string[];
+					error?: string;
+				};
+
+				if (Array.isArray(errorData.message) && errorData.message.length > 0) {
+					message = errorData.message.join(", ");
+				} else if (typeof errorData.message === "string" && errorData.message.trim()) {
+					message = errorData.message;
+				} else if (typeof errorData.error === "string" && errorData.error.trim()) {
+					message = errorData.error;
+				}
 			} catch {
 				// ignore parse errors
 			}

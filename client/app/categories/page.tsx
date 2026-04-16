@@ -1,8 +1,17 @@
 import { CategoryCard } from "@/features/categories/components/category-card";
 import { getCategories } from "@/features/categories/services/category.service";
+import { Pagination } from "@/shared/components/layouts/pagination";
 
-export default async function CategoriesPage() {
-  const categories = await getCategories();
+type CategoriesPageProps = {
+  searchParams?: Promise<{
+    page?: string;
+  }>;
+};
+
+export default async function CategoriesPage({ searchParams }: CategoriesPageProps) {
+  const params = (await searchParams) ?? {};
+  const currentPage = Math.max(1, Number(params.page ?? "1") || 1);
+  const categories = await getCategories(currentPage);
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
@@ -16,6 +25,12 @@ export default async function CategoriesPage() {
           <CategoryCard key={category.id} category={category} />
         ))}
       </section>
+
+      <Pagination
+        currentPage={categories.page}
+        totalPages={categories.last_page}
+        pathname="/categories"
+      />
     </main>
   );
 }

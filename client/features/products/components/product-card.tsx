@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import {
 	Card,
 	CardContent,
@@ -7,15 +10,32 @@ import {
 } from "@/shared/components/ui/card";
 import Link from "next/link";
 import { Product } from "../types/product";
+import { Button } from "@/shared/components/ui/button";
+import { useCart } from "@/features/cart/hooks/use-cart";
 
 type ProductCardProps = {
 	product: Product;
 };
 
 export function ProductCard({ product }: ProductCardProps) {
+	const [quantity, setQuantity] = useState(1);
+	const { addItem, loading } = useCart();
+
+	const onDecrease = () => {
+		setQuantity((prev) => Math.max(1, prev - 1));
+	};
+
+	const onIncrease = () => {
+		setQuantity((prev) => prev + 1);
+	};
+
+	const onAddToCart = async () => {
+		await addItem({ product, quantity });
+	};
+
 	return (
-		<Link href={`/products/${product.slug}`} className="group block h-full">
-			<Card className="h-full justify-between border border-border/60 transition-colors group-hover:border-primary/30">
+		<Card className="h-full justify-between border border-border/60 transition-colors hover:border-primary/30">
+			<Link href={`/products/${product.id}`} className="group block">
 				<img
 					src={product.thumbnail}
 					alt={product.name}
@@ -34,15 +54,44 @@ export function ProductCard({ product }: ProductCardProps) {
 						{product.description}
 					</p>
 				</CardContent>
+			</Link>
 
-				<CardFooter className="border-t">
-					<div className="w-full">
+			<CardFooter className="border-t">
+				<div className="w-full space-y-3">
+					<div>
 						<p className="text-lg font-semibold">${product.price}</p>
 						<p className="text-xs text-muted-foreground">Category slug: {product.category.slug}</p>
 					</div>
-				</CardFooter>
-			</Card>
-		</Link>
+
+					<div className="flex items-center justify-between gap-2">
+						<div className="inline-flex items-center rounded-md border">
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon-sm"
+								onClick={onDecrease}
+								aria-label={`Decrease quantity for ${product.name}`}
+							>
+								-
+							</Button>
+							<span className="min-w-8 text-center text-sm font-medium">{quantity}</span>
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon-sm"
+								onClick={onIncrease}
+								aria-label={`Increase quantity for ${product.name}`}
+							>
+								+
+							</Button>
+						</div>
+						<Button type="button" onClick={onAddToCart} disabled={loading}>
+							Add to cart
+						</Button>
+					</div>
+				</div>
+			</CardFooter>
+		</Card>
 	);
 }
 

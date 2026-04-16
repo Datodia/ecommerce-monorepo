@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Outfit, Lora } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/shared/lib/utils";
-import { Header } from "@/shared/components/layout/header";
+import { Header } from "@/shared/components/layouts/header";
 import { AuthStoreProvider } from "@/features/auth/store/auth-store-provider";
+import { CartStoreProvider } from "@/features/cart/store/cart-store-provider";
 import { Toaster } from "sonner";
 
 const loraHeading = Lora({subsets:['latin'],variable:'--font-heading'});
@@ -37,9 +38,11 @@ export default function RootLayout({
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col">
         <AuthStoreProvider>
-          <Header />
-          {children}
-          <Toaster richColors position="top-right" />
+          <CartStoreProvider>
+            <Header />
+            {children}
+            <Toaster richColors position="top-right" />
+          </CartStoreProvider>
         </AuthStoreProvider>
       </body>
     </html>

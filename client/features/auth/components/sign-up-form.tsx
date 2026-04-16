@@ -45,7 +45,7 @@ export const SignUpForm = () => {
 			const result = await signUp({
 				email: values.email,
 				password: values.password,
-				fullname: values.fullName,
+				fullName: values.fullName,
 			});
 			setUser(result.user);
 			router.push("/");

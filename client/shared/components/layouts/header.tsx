@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { logout } from "@/features/auth/services/auth.service";
 import { useAuthStore } from "@/features/auth/store/auth-store-provider";
+import { CartSheet } from "@/features/cart/components/cart-sheet";
 import { Button } from "@/shared/components/ui/button";
 
 const navLinks = [
@@ -19,11 +20,14 @@ const navLinks = [
 export function Header() {
 	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(false);
+	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+	const userMenuRef = useRef<HTMLDivElement | null>(null);
   const { user } = useAuth();
   const setUser = useAuthStore((state) => state.setUser);
   const setError = useAuthStore((state) => state.setError);
 
 	const closeMenu = () => setIsOpen(false);
+	const closeUserMenu = () => setIsUserMenuOpen(false);
 	const userInitial = user?.fullName?.trim().charAt(0).toUpperCase() ?? "U";
 
 	const handleLogout = () => {
@@ -55,6 +59,17 @@ export function Header() {
 		};
 	}, [isOpen]);
 
+	useEffect(() => {
+		const onPointerDown = (event: MouseEvent) => {
+			if (!userMenuRef.current?.contains(event.target as Node)) {
+				closeUserMenu();
+			}
+		};
+
+		window.addEventListener("mousedown", onPointerDown);
+		return () => window.removeEventListener("mousedown", onPointerDown);
+	}, []);
+
 	return (
 		<>
 			<header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
@@ -76,18 +91,40 @@ export function Header() {
 					</nav>
 
 					<div className="hidden items-center gap-2 md:flex">
+						<CartSheet />
 						{user ? (
-							<>
-								<div className="flex items-center gap-2 rounded-full border border-border px-2 py-1">
+							<div className="relative" ref={userMenuRef}>
+								<Button
+									type="button"
+									variant="outline"
+									className="flex items-center gap-2 rounded-full px-2 py-1"
+									onClick={() => setIsUserMenuOpen((prev) => !prev)}
+								>
 									<div className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
 										{userInitial}
 									</div>
 									<span className="text-sm font-medium text-foreground">{user.fullName}</span>
-								</div>
-								<Button variant="outline" onClick={handleLogout}>
-									Logout
 								</Button>
-							</>
+
+								{isUserMenuOpen ? (
+									<div className="absolute right-0 top-[calc(100%+0.5rem)] w-48 rounded-lg border bg-background p-2 shadow-lg">
+										<Link
+											href="/orders"
+											onClick={closeUserMenu}
+											className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+										>
+											Orders
+										</Link>
+										<button
+											type="button"
+											onClick={handleLogout}
+											className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium hover:bg-muted"
+										>
+											Logout
+										</button>
+									</div>
+								) : null}
+							</div>
 						) : (
 							<>
 								<Button asChild variant="ghost">
@@ -100,15 +137,17 @@ export function Header() {
 						)}
 					</div>
 
-					<Button
-						variant="ghost"
-						size="icon"
-						className="md:hidden"
-						aria-label="Open navigation menu"
-						onClick={() => setIsOpen(true)}
-					>
-						<Menu />
-					</Button>
+					<div className="flex items-center gap-1 md:hidden">
+						<CartSheet />
+						<Button
+							variant="ghost"
+							size="icon"
+							aria-label="Open navigation menu"
+							onClick={() => setIsOpen(true)}
+						>
+							<Menu />
+						</Button>
+					</div>
 				</div>
 			</header>
 
@@ -152,15 +191,18 @@ export function Header() {
 				<div className="mx-4 mt-auto mb-4 space-y-2 border-t pt-4">
 					{user ? (
 						<>
-							<div className="flex items-center gap-2 rounded-md border border-border px-3 py-2">
-								<div className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
-									{userInitial}
+								<div className="space-y-2">
+									<Link
+										href="/orders"
+										onClick={closeMenu}
+										className="block rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/70"
+									>
+										Orders
+									</Link>
+									<Button variant="outline" className="w-full" onClick={handleLogout}>
+										Logout
+									</Button>
 								</div>
-								<div className="text-sm font-medium text-foreground">{user.fullName}</div>
-							</div>
-							<Button variant="outline" className="w-full" onClick={handleLogout}>
-								Logout
-							</Button>
 						</>
 					) : (
 						<>

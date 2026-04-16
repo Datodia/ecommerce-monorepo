@@ -2,12 +2,14 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { raw } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  const corsOrigins = configService.get<string[]>('security.cors.origins') ?? [];
+  const corsOrigins =
+    configService.get<string[]>('security.cors.origins') ?? [];
   const frontendUrl = configService.get<string>('frontend.url');
   const allowedOrigins = [
     ...corsOrigins,
@@ -19,12 +21,17 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    transform: true,
-    forbidNonWhitelisted: true
-  }))
+  app.use('/payments/webhook', raw({ type: 'application/json' }));
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
   await app.listen(configService.get<number>('app.port') ?? 4000);
 }
-bootstrap();
+
+void bootstrap();

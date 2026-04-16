@@ -8,14 +8,12 @@ import { QueryParamsDto } from './dto/query-params.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User) private userRepo: Repository<User>
-  ){}
-  
-  findAll({page,limit}: QueryParamsDto) {
+  constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
+
+  findAll({ page, limit }: QueryParamsDto) {
     return this.userRepo.find({
       skip: (page - 1) * limit,
-      take: limit
+      take: limit,
     });
   }
 

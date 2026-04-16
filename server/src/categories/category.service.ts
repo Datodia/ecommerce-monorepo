@@ -9,20 +9,20 @@ import { QueryParamsDto } from './dto/query-params.dto';
 @Injectable()
 export class CategoryService {
   constructor(
-    @InjectRepository(Category) private categoryRepo: Repository<Category>
-  ){}
+    @InjectRepository(Category) private categoryRepo: Repository<Category>,
+  ) {}
 
-  async onModuleInit(){
+  async onModuleInit() {
     const resp = await fetch('https://api.escuelajs.co/api/v1/categories');
     const categories = await resp.json();
     const insetedCategories = categories.map((category: any) => ({
       name: category.name,
       slug: category.slug,
-      images: category.image
-    }))
+      images: category.image,
+    }));
 
     const count = await this.categoryRepo.count();
-    if(count === 0){
+    if (count === 0) {
       await this.categoryRepo.insert(insetedCategories);
     }
   }
@@ -32,18 +32,18 @@ export class CategoryService {
     return category;
   }
 
-  async findAll({page , limit, category }: QueryParamsDto) {
+  async findAll({ page, limit, category }: QueryParamsDto) {
     const [data, total] = await this.categoryRepo.findAndCount({
       where: category ? { name: category } : {},
       skip: (page - 1) * limit,
-      take: limit
+      take: limit,
     });
 
     return {
       data,
       total,
       page,
-      last_page: Math.ceil(total / limit)
+      last_page: Math.ceil(total / limit),
     };
   }
 

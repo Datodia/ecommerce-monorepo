@@ -8,7 +8,9 @@ import { QueryParamsDto } from './dto/query-params.dto';
 
 @Injectable()
 export class ProductsService {
-  constructor(@InjectRepository(Product) private productRepo: Repository<Product>) {}
+  constructor(
+    @InjectRepository(Product) private productRepo: Repository<Product>,
+  ) {}
 
   async create(createProductDto: CreateProductDto) {
     const product = await this.productRepo.create(createProductDto);
@@ -16,7 +18,7 @@ export class ProductsService {
     return await this.findOne(savedProduct.id);
   }
 
-  async findAll({page, limit, category}: QueryParamsDto) {
+  async findAll({ page, limit, category }: QueryParamsDto) {
     const [data, total] = await this.productRepo.findAndCount({
       where: category ? { category: { slug: category } } : {},
       skip: (page - 1) * limit,
@@ -30,13 +32,13 @@ export class ProductsService {
       data,
       total,
       page,
-      last_page: Math.ceil(total / limit)
+      last_page: Math.ceil(total / limit),
     };
   }
 
-  async findOne(id: string) {
+  async findOne(idOrSlug: string) {
     return await this.productRepo.findOne({
-      where: { id },
+      where: [{ id: idOrSlug }],
       relations: {
         category: true,
       },
@@ -49,8 +51,8 @@ export class ProductsService {
   }
 
   async remove(id: string) {
-    const product = await this.findOne(id); 
-    await this.productRepo.delete({id});
+    const product = await this.findOne(id);
+    await this.productRepo.delete({ id });
     return product;
   }
 }

@@ -1,38 +1,44 @@
-import { validateEnv, type EnvSchema } from './env.validation'
+import { validateEnv, type EnvSchema } from './env.validation';
 
-type NodeEnv = 'development' | 'test' | 'production'
-
+type NodeEnv = 'development' | 'test' | 'production';
 
 export type AppConfig = {
   app: {
-    port: number
-    nodeEnv: NodeEnv
-  }
+    port: number;
+    nodeEnv: NodeEnv;
+  };
   security: {
     jwt: {
-      secret: string
-    }
+      secret: string;
+    };
     cors: {
-      origins?: string[]
-    }
-  }
+      origins?: string[];
+    };
+  };
 
   database: {
-    host: string
-    port: number
-    username: string
-    password: string
-    name: string
-  }
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+    name: string;
+  };
 
- 
+  payment: {
+    stripe: {
+      secretKey: string;
+      webhookSecret: string;
+      currency: string;
+    };
+  };
+
   frontend: {
-    url: string
-  }
-}
+    url: string;
+  };
+};
 
 const configuration = (): AppConfig => {
-  const env: EnvSchema = validateEnv(process.env)
+  const env: EnvSchema = validateEnv(process.env);
 
   return {
     app: {
@@ -48,7 +54,13 @@ const configuration = (): AppConfig => {
       name: env.DB_NAME,
     },
 
-  
+    payment: {
+      stripe: {
+        secretKey: env.STRIPE_SECRET_KEY,
+        webhookSecret: env.STRIPE_WEBHOOK_SECRET,
+        currency: env.STRIPE_CURRENCY,
+      },
+    },
 
     security: {
       jwt: {
@@ -63,11 +75,10 @@ const configuration = (): AppConfig => {
       },
     },
 
-   
     frontend: {
-      url: env.FRONTEND_URL || ''
+      url: env.FRONTEND_URL || '',
     },
-  }
-}
+  };
+};
 
-export default configuration
+export default configuration;

@@ -13,13 +13,20 @@ import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
 import { AuthModule } from './auth/auth.module';
+import { CartModule } from './cart/cart.module';
+import { Cart } from './cart/entities/cart.entity';
+import { CartItem } from './cart/entities/cart-item.entity';
+import { PaymentModule } from './payments/payment.module';
+import { OrdersModule } from './orders/orders.module';
+import { Order } from './orders/entities/order.entity';
+import { OrderItem } from './orders/entities/order-item.entity';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
-      validate: validateEnv
+      validate: validateEnv,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -32,14 +39,17 @@ import { AuthModule } from './auth/auth.module';
         username: configService.get<string>('database.username'),
         password: configService.get<string>('database.password'),
         database: configService.get<string>('database.name'),
-        entities: [Category, Product, User],
+        entities: [Category, Product, User, Cart, CartItem, Order, OrderItem],
         synchronize: configService.get<string>('app.nodeEnv') !== 'production',
-      })
+      }),
     }),
     ProductsModule,
     CategoryModule,
     UsersModule,
-    AuthModule
+    AuthModule,
+    CartModule,
+    PaymentModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

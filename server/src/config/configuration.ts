@@ -7,6 +7,12 @@ export type AppConfig = {
     port: number;
     nodeEnv: NodeEnv;
   };
+
+  cloudinary: {
+    cloudName: string;
+    apiKey: string;
+    apiSecret: string;
+  };
   security: {
     jwt: {
       secret: string;
@@ -30,6 +36,13 @@ export type AppConfig = {
       webhookSecret: string;
       currency: string;
     };
+  };
+
+  email: {
+    host: string;
+    port: number;
+    user: string;
+    pass: string;
   };
 
   frontend: {
@@ -62,6 +75,13 @@ const configuration = (): AppConfig => {
       },
     },
 
+    email: {
+      host: env.EMAIL_HOST,
+      port: Number(env.EMAIL_PORT),
+      user: env.EMAIL_USER,
+      pass: env.EMAIL_PASS,
+    },
+
     security: {
       jwt: {
         secret: env.JWT_SECRET,
@@ -77,6 +97,12 @@ const configuration = (): AppConfig => {
 
     frontend: {
       url: env.FRONTEND_URL || '',
+    },
+
+    cloudinary: {
+      cloudName: env.CLOUDINARY_CLOUD_NAME,
+      apiKey: env.CLOUDINARY_API_KEY,
+      apiSecret: env.CLOUDINARY_API_SECRET,
     },
   };
 };

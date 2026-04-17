@@ -5,11 +5,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
 import { Repository } from 'typeorm';
 import { QueryParamsDto } from './dto/query-params.dto';
+import { StorageService } from '@src/storage/storage.service';
 
 @Injectable()
 export class CategoryService {
   constructor(
     @InjectRepository(Category) private categoryRepo: Repository<Category>,
+    private readonly storageService: StorageService,
   ) {}
 
   async onModuleInit() {
@@ -57,6 +59,8 @@ export class CategoryService {
   }
 
   async remove(id: string) {
+    const category = await this.categoryRepo.findOne({ where: { id } });
+    if (category?.images) await this.storageService.deleteByUrl(category.images);
     await this.categoryRepo.delete({ id });
     return { message: 'Category deleted successfully' };
   }

@@ -1,7 +1,7 @@
 "use client"
 
+import { Suspense, useEffect, useRef } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -33,10 +33,25 @@ import {
 import { Input } from "@/shared/components/ui/input"
 import { Textarea } from "@/shared/components/ui/textarea"
 
-export default function CheckoutPage() {
+function SearchParamsHandler() {
 	const router = useRouter()
 	const searchParams = useSearchParams()
 	const handledStatusRef = useRef<string | null>(null)
+
+	useEffect(() => {
+		const status = searchParams.get("status")
+		if (!status || handledStatusRef.current === status) return
+		handledStatusRef.current = status
+		if (status === "cancelled") {
+			toast.error("Payment cancelled. Your order was not completed.")
+			router.replace("/checkout")
+		}
+	}, [router, searchParams])
+
+	return null
+}
+
+export default function CheckoutPage() {
 	const { items, loading: cartLoading } = useCart()
 	const totalAmount = items.reduce(
 		(sum, item) => sum + Number(item.price || 0) * item.quantity,
@@ -52,21 +67,6 @@ export default function CheckoutPage() {
 		},
 	})
 
-	useEffect(() => {
-		const status = searchParams.get("status")
-
-		if (!status || handledStatusRef.current === status) {
-			return
-		}
-
-		handledStatusRef.current = status
-
-		if (status === "cancelled") {
-			toast.error("Payment cancelled. Your order was not completed.")
-			router.replace("/checkout")
-		}
-	}, [router, searchParams])
-
 	const onSubmit = async (values: CheckoutFormValues) => {
 		const payload = {
 			...values,
@@ -77,15 +77,12 @@ export default function CheckoutPage() {
 			})),
 		}
 
-		console.log("Checkout payload:", payload)
-
 		try {
 			const result = await createCheckout(payload)
 			if (result.url) {
 				window.location.assign(result.url)
 				return
 			}
-
 			toast.success("Checkout session created")
 		} catch (error) {
 			const message = error instanceof Error ? error.message : "Checkout failed"
@@ -95,6 +92,10 @@ export default function CheckoutPage() {
 
 	return (
 		<main className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
+			<Suspense>
+				<SearchParamsHandler />
+			</Suspense>
+
 			<Card className="mb-6">
 				<CardHeader>
 					<CardTitle className="font-heading text-3xl font-semibold">Order summary</CardTitle>
@@ -127,8 +128,7 @@ export default function CheckoutPage() {
 								</div>
 							))}
 						</div>
-					)
-					}
+					)}
 				</CardContent>
 				<CardFooter className="border-t">
 					<div className="flex w-full items-center justify-between text-sm font-medium">

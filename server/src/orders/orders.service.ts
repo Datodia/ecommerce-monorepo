@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Order } from './entities/order.entity';
 import { Repository } from 'typeorm';
+import { UpdateOrderAdminDto } from './dto/update-order-admin.dto';
 
 @Injectable()
 export class OrdersService {
@@ -45,6 +46,48 @@ export class OrdersService {
       throw new ForbiddenException('You cannot access this order');
     }
 
+    return order;
+  }
+
+  async findAllForAdmin() {
+    return this.orderRepo.find({
+      relations: {
+        items: true,
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
+
+  async updateForAdmin(id: string, payload: UpdateOrderAdminDto) {
+    const order = await this.orderRepo.findOne({ where: { id } });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    await this.orderRepo.update({ id }, payload);
+    return this.orderRepo.findOne({
+      where: { id },
+      relations: {
+        items: true,
+      },
+    });
+  }
+
+  async removeForAdmin(id: string) {
+    const order = await this.orderRepo.findOne({
+      where: { id },
+      relations: {
+        items: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    await this.orderRepo.delete({ id });
     return order;
   }
 }

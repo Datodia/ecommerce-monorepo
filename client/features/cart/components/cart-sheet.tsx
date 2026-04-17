@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { ShoppingCart, Trash2 } from "lucide-react";
 
@@ -16,6 +17,7 @@ import {
 } from "@/shared/components/ui/sheet";
 
 export const CartSheet = () => {
+	const [open, setOpen] = useState(false);
 	const {
 		items,
 		loading,
@@ -27,7 +29,7 @@ export const CartSheet = () => {
 	} = useCart();
 
 	return (
-		<Sheet>
+		<Sheet open={open} onOpenChange={setOpen}>
 			<SheetTrigger asChild>
 				<Button variant="outline" size="icon" className="relative" aria-label="Open cart">
 					<ShoppingCart className="size-4" />
@@ -108,7 +110,9 @@ export const CartSheet = () => {
 						<span>${totalAmount.toFixed(2)}</span>
 					</div>
 					<Button asChild className="w-full" disabled={items.length === 0}>
-						<Link href="/checkout">Go to checkout</Link>
+						<Link href="/checkout" onClick={() => setOpen(false)}>
+							Go to checkout
+						</Link>
 					</Button>
 				</SheetFooter>
 			</SheetContent>

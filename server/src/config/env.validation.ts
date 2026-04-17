@@ -34,6 +34,16 @@ export const envSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1),
   STRIPE_WEBHOOK_SECRET: z.string().min(1),
   STRIPE_CURRENCY: z.string().min(1).default('usd'),
+
+
+  EMAIL_HOST: z.string().min(1),
+  EMAIL_PORT: z.coerce.number().int().min(1).max(65535),
+  EMAIL_USER: z.string().min(1),
+  EMAIL_PASS: z.string().min(1),
+
+  CLOUDINARY_CLOUD_NAME: z.string().min(1),
+  CLOUDINARY_API_KEY: z.string().min(1),
+  CLOUDINARY_API_SECRET: z.string().min(1),
 });
 
 export type EnvSchema = z.infer<typeof envSchema>;

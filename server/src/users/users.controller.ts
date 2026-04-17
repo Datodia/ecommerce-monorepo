@@ -1,19 +1,23 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
   Patch,
   Param,
   Delete,
   Query,
+  Body,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryParamsDto } from './dto/query-params.dto';
+import { AuthGuard } from '@src/auth/guard/auth.guard';
+import { AdminGuard } from '@src/auth/guard/admin.guard';
+import { Admin } from '@src/auth/decorators/admin.decorator';
 
 @Controller('users')
+@UseGuards(AuthGuard, AdminGuard)
+@Admin()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

@@ -19,7 +19,8 @@ type ProductCardProps = {
 
 export function ProductCard({ product }: ProductCardProps) {
 	const [quantity, setQuantity] = useState(1);
-	const { addItem, loading } = useCart();
+	const [isAdding, setIsAdding] = useState(false);
+	const { addItem } = useCart();
 
 	const onDecrease = () => {
 		setQuantity((prev) => Math.max(1, prev - 1));
@@ -30,7 +31,12 @@ export function ProductCard({ product }: ProductCardProps) {
 	};
 
 	const onAddToCart = async () => {
-		await addItem({ product, quantity });
+		setIsAdding(true);
+		try {
+			await addItem({ product, quantity });
+		} finally {
+			setIsAdding(false);
+		}
 	};
 
 	return (
@@ -39,11 +45,11 @@ export function ProductCard({ product }: ProductCardProps) {
 				<img
 					src={product.thumbnail}
 					alt={product.name}
-					className="h-56 w-full bg-gray-100 object-contain p-4"
+					className="h-64 w-full bg-gray-100 object-contain p-4"
 				/>
 
 				<CardHeader className="space-y-2">
-					<p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+					<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
 						{product.category.name}
 					</p>
 					<CardTitle className="line-clamp-2 text-base">{product.name}</CardTitle>
@@ -60,15 +66,14 @@ export function ProductCard({ product }: ProductCardProps) {
 				<div className="w-full space-y-3">
 					<div>
 						<p className="text-lg font-semibold">${product.price}</p>
-						<p className="text-xs text-muted-foreground">Category slug: {product.category.slug}</p>
-					</div>
+						</div>
 
 					<div className="flex items-center justify-between gap-2">
 						<div className="inline-flex items-center rounded-md border">
 							<Button
 								type="button"
 								variant="ghost"
-								size="icon-sm"
+								size="icon"
 								onClick={onDecrease}
 								aria-label={`Decrease quantity for ${product.name}`}
 							>
@@ -78,15 +83,15 @@ export function ProductCard({ product }: ProductCardProps) {
 							<Button
 								type="button"
 								variant="ghost"
-								size="icon-sm"
+								size="icon"
 								onClick={onIncrease}
 								aria-label={`Increase quantity for ${product.name}`}
 							>
 								+
 							</Button>
 						</div>
-						<Button type="button" onClick={onAddToCart} disabled={loading}>
-							Add to cart
+						<Button type="button" onClick={onAddToCart} disabled={isAdding}>
+							{isAdding ? "Adding..." : "Add to cart"}
 						</Button>
 					</div>
 				</div>

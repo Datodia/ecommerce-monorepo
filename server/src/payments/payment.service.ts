@@ -12,12 +12,15 @@ import Stripe = require('stripe');
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { Order, OrderStatus } from '@src/orders/entities/order.entity';
 import { OrderItem } from '@src/orders/entities/order-item.entity';
+import { RabbitmqService } from '@src/rabbitmq/rabbitmq.service';
 
 type StripeClient = Stripe.Stripe;
 type CheckoutSessionCreateParams = NonNullable<
   Parameters<StripeClient['checkout']['sessions']['create']>[0]
 >;
-type CheckoutLineItem = NonNullable<CheckoutSessionCreateParams['line_items']>[number];
+type CheckoutLineItem = NonNullable<
+  CheckoutSessionCreateParams['line_items']
+>[number];
 type CheckoutSessionEvent = {
   type: 'checkout.session.completed';
   data: {
@@ -39,8 +42,8 @@ export class PaymentService {
 
   constructor(
     private readonly configService: ConfigService,
-    @InjectRepository(Product)
-    private readonly productRepo: Repository<Product>,
+    private readonly rabbitmqService: RabbitmqService,
+    @InjectRepository(Product) private readonly productRepo: Repository<Product>,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
     @InjectRepository(Order) private readonly orderRepo: Repository<Order>,
   ) {
@@ -83,28 +86,28 @@ export class PaymentService {
 
     const lineItems: CheckoutSessionCreateParams['line_items'] =
       createCheckoutDto.items.map((item) => {
-      const product = productsById.get(item.productId);
-      if (!product) {
-        throw new NotFoundException('Product not found');
-      }
+        const product = productsById.get(item.productId);
+        if (!product) {
+          throw new NotFoundException('Product not found');
+        }
 
-      const thumbnail = item.thumbnail ?? product.thumbnail;
+        const thumbnail = item.thumbnail ?? product.thumbnail;
 
-      return {
-        quantity: item.quantity,
-        price_data: {
-          currency,
-          unit_amount: Math.round(Number(product.price) * 100),
-          product_data: {
-            name: product.name,
-            description: product.description ?? undefined,
-            images: thumbnail ? [thumbnail] : undefined,
-            metadata: {
-              productId: product.id,
+        return {
+          quantity: item.quantity,
+          price_data: {
+            currency,
+            unit_amount: Math.round(Number(product.price) * 100),
+            product_data: {
+              name: product.name,
+              description: product.description ?? undefined,
+              images: thumbnail ? [thumbnail] : undefined,
+              metadata: {
+                productId: product.id,
+              },
             },
           },
-        },
-      } as CheckoutLineItem;
+        } as CheckoutLineItem;
       });
 
     const session = await this.stripe.checkout.sessions.create({
@@ -164,6 +167,7 @@ export class PaymentService {
         'Checkout session is missing user metadata',
       );
     }
+    const user = await this.userRepo.findOne({ where: { id: userId } });
 
     if (session.payment_status !== 'paid') {
       return { received: true, skipped: true };
@@ -250,6 +254,22 @@ export class PaymentService {
     });
 
     const savedOrder = await this.orderRepo.save(order);
+
+    this.rabbitmqService.emit('order_created', {
+      userEmail: user?.email,
+      orderItems: orderItems.map((item) => ({
+        productId: item.productId,
+        productName: item.productName,
+        thumbnail: item.thumbnail,
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+        subtotal: item.subtotal,
+      })),
+      totalAmount: order.totalAmount,
+      currency: order.currency,
+      orderId: savedOrder.id,
+    });
+    
     return { received: true, orderId: savedOrder.id };
   }
 }

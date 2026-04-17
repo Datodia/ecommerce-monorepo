@@ -6,9 +6,14 @@ import { Product } from '@src/products/entities/product.entity';
 import { User } from '@src/users/entities/user.entity';
 import { Order } from '@src/orders/entities/order.entity';
 import { AuthModule } from '@src/auth/auth.module';
+import { RabbitmqModule } from '@src/rabbitmq/rabbitmq.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Product, User, Order]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([Product, User, Order]), 
+    AuthModule,
+    RabbitmqModule,
+  ],
   controllers: [PaymentController],
   providers: [PaymentService],
 })

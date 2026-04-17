@@ -12,7 +12,6 @@ import { CartSheet } from "@/features/cart/components/cart-sheet";
 import { Button } from "@/shared/components/ui/button";
 
 const navLinks = [
-	{ href: "/", label: "Home" },
 	{ href: "/products", label: "Products" },
 	{ href: "/categories", label: "Categories" },
 ];
@@ -88,6 +87,14 @@ export function Header() {
 								{link.label}
 							</Link>
 						))}
+						{user?.isAdmin ? (
+							<Link
+								href="/dashboard"
+								className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+							>
+								Dashboard
+							</Link>
+						) : null}
 					</nav>
 
 					<div className="hidden items-center gap-2 md:flex">
@@ -115,6 +122,15 @@ export function Header() {
 										>
 											Orders
 										</Link>
+										{user.isAdmin ? (
+											<Link
+												href="/dashboard"
+												onClick={closeUserMenu}
+												className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+											>
+												Dashboard
+											</Link>
+										) : null}
 										<button
 											type="button"
 											onClick={handleLogout}
@@ -186,6 +202,15 @@ export function Header() {
 							{link.label}
 						</Link>
 					))}
+					{user?.isAdmin ? (
+						<Link
+							href="/dashboard"
+							onClick={closeMenu}
+							className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/70"
+						>
+							Dashboard
+						</Link>
+					) : null}
 				</nav>
 
 				<div className="mx-4 mt-auto mb-4 space-y-2 border-t pt-4">
@@ -199,6 +224,15 @@ export function Header() {
 									>
 										Orders
 									</Link>
+									{user.isAdmin ? (
+										<Link
+											href="/dashboard"
+											onClick={closeMenu}
+											className="block rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/70"
+										>
+											Dashboard
+										</Link>
+									) : null}
 									<Button variant="outline" className="w-full" onClick={handleLogout}>
 										Logout
 									</Button>

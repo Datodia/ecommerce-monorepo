@@ -24,6 +24,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
+import { DeleteConfirmationModal } from "@/features/dashboard/components/delete-confirmation-modal";
+import { Pagination } from "@/features/dashboard/components/pagination";
+import { DASHBOARD_PAGE_SIZE } from "@/features/dashboard/types/admin.types";
 
 const ORDER_STATUSES = ["paid", "pending", "processing", "shipped", "delivered", "cancelled"];
 
@@ -80,6 +83,18 @@ export const DashboardOrdersSection = ({
     buildingNumber: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const itemsPerPage = DASHBOARD_PAGE_SIZE;
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const safeCurrentPage = Math.min(currentPage, Math.max(totalPages, 1));
+  const paginatedOrders = orders.slice(
+    (safeCurrentPage - 1) * itemsPerPage,
+    (safeCurrentPage - 1) * itemsPerPage + itemsPerPage,
+  );
 
   const setField = (field: keyof OrderFormState, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -93,6 +108,25 @@ export const DashboardOrdersSection = ({
     });
     setEditId(order.id);
     setDialogOpen(true);
+  };
+
+  const handleDeleteClick = (order: Order) => {
+    setOrderToDelete(order);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!orderToDelete) return;
+    setDeleting(true);
+    try {
+      await onDeleteOrder(orderToDelete.id);
+      setDeleteConfirmOpen(false);
+      setOrderToDelete(null);
+    } catch {
+      // toast shown by hook
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -140,7 +174,7 @@ export const DashboardOrdersSection = ({
               </tr>
             </thead>
             <tbody>
-              {orders.map((order) => (
+              {paginatedOrders.map((order) => (
                 <tr key={order.id} className="border-b transition-colors hover:bg-muted/50">
                   <td className="p-2">
                     <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs">
@@ -165,7 +199,7 @@ export const DashboardOrdersSection = ({
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => onDeleteOrder(order.id)}
+                        onClick={() => handleDeleteClick(order)}
                       >
                         <Trash2 className="mr-1 size-3" />
                         Delete
@@ -178,6 +212,24 @@ export const DashboardOrdersSection = ({
           </table>
         </CardContent>
       </Card>
+
+      <Pagination
+        currentPage={safeCurrentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+        totalItems={orders.length}
+      />
+
+      <DeleteConfirmationModal
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Order"
+        description="Are you sure you want to delete this order?"
+        itemName={`Order ${orderToDelete?.id.slice(0, 8)}`}
+        isLoading={deleting}
+      />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>

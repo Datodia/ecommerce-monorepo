@@ -1,11 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Upload, X } from "lucide-react";
 
 import { Category } from "@/features/categories/types/category";
 import { uploadFile } from "@/features/dashboard/services/admin.service";
+import { DASHBOARD_PAGE_SIZE } from "@/features/dashboard/types/admin.types";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -19,6 +21,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
+import { DeleteConfirmationModal } from "@/features/dashboard/components/delete-confirmation-modal";
+import { Pagination } from "@/features/dashboard/components/pagination";
 
 type CategoryFormState = {
   name: string;
@@ -28,6 +32,11 @@ type CategoryFormState = {
 
 type DashboardCategoriesSectionProps = {
   categories: Category[];
+  currentPage: number;
+  totalItems: number;
+  totalPages: number;
+  isLoading?: boolean;
+  onPageChange: (page: number) => Promise<unknown>;
   onCreateCategory: (payload: { name: string; slug: string; images?: string }) => Promise<Category>;
   onUpdateCategory: (
     id: string,
@@ -46,6 +55,11 @@ const toSlug = (name: string) =>
 
 export const DashboardCategoriesSection = ({
   categories,
+  currentPage,
+  totalItems,
+  totalPages,
+  isLoading = false,
+  onPageChange,
   onCreateCategory,
   onUpdateCategory,
   onDeleteCategory,
@@ -56,6 +70,11 @@ export const DashboardCategoriesSection = ({
   const [form, setForm] = useState<CategoryFormState>(defaultForm);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const itemsPerPage = DASHBOARD_PAGE_SIZE;
 
   const previewUrl = useMemo(
     () => (pendingFile ? URL.createObjectURL(pendingFile) : null),
@@ -99,6 +118,25 @@ export const DashboardCategoriesSection = ({
   const clearImage = () => {
     setPendingFile(null);
     setField("images", "");
+  };
+
+  const handleDeleteClick = (category: Category) => {
+    setCategoryToDelete(category);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!categoryToDelete) return;
+    setDeleting(true);
+    try {
+      await onDeleteCategory(categoryToDelete.id);
+      setDeleteConfirmOpen(false);
+      setCategoryToDelete(null);
+    } catch {
+      // toast shown by hook
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -176,7 +214,7 @@ export const DashboardCategoriesSection = ({
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => onDeleteCategory(category.id)}
+                        onClick={() => handleDeleteClick(category)}
                       >
                         <Trash2 className="mr-1 size-3" />
                         Delete
@@ -185,10 +223,35 @@ export const DashboardCategoriesSection = ({
                   </td>
                 </tr>
               ))}
+              {categories.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="p-6 text-center text-sm text-muted-foreground">
+                    {isLoading ? "Loading categories..." : "No categories found."}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </CardContent>
       </Card>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => void onPageChange(page)}
+        itemsPerPage={itemsPerPage}
+        totalItems={totalItems}
+      />
+
+      <DeleteConfirmationModal
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Category"
+        description="Are you sure you want to delete this category?"
+        itemName={categoryToDelete?.name}
+        isLoading={deleting}
+      />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -210,9 +273,12 @@ export const DashboardCategoriesSection = ({
               <Label>Image</Label>
               {(previewUrl || form.images) && (
                 <div className="relative w-fit">
-                  <img
+                  <Image
                     src={previewUrl ?? form.images}
                     alt="preview"
+                    width={80}
+                    height={80}
+                    unoptimized
                     className="h-20 w-20 rounded-md object-cover"
                   />
                   <button

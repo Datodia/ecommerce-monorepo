@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { useCart } from "@/features/cart/hooks/use-cart";
@@ -54,12 +55,19 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
 							style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
 						>
 							{images.map((image, index) => (
-								<img
+								<div
 									key={`${image}-${index}`}
-									src={image}
-									alt={`${product.name} image ${index + 1}`}
-									className="h-72 w-full shrink-0 object-contain p-4 sm:h-80"
-								/>
+									className="relative h-72 w-full shrink-0 sm:h-80"
+								>
+									<Image
+										src={image}
+										alt={`${product.name} image ${index + 1}`}
+										fill
+										unoptimized
+										className="object-contain p-4"
+										sizes="(max-width: 1024px) 100vw, 50vw"
+									/>
+								</div>
 							))}
 						</div>
 						<Button
@@ -99,11 +107,16 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
 								}`}
 								aria-label={`Show image ${index + 1}`}
 							>
-								<img
-									src={image}
-									alt={`${product.name} thumbnail ${index + 1}`}
-									className="h-16 w-full object-contain"
-								/>
+								<div className="relative h-16 w-full">
+									<Image
+										src={image}
+										alt={`${product.name} thumbnail ${index + 1}`}
+										fill
+										unoptimized
+										className="object-contain"
+										sizes="80px"
+									/>
+								</div>
 							</button>
 						))}
 					</div>

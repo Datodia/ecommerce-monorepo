@@ -24,18 +24,51 @@ function ChartContainer({
 }: React.ComponentProps<"div"> & { config: ChartConfig; children: React.ComponentProps<typeof RechartsPrimitive.ResponsiveContainer>["children"] }) {
   const uniqueId = React.useId();
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const [size, setSize] = React.useState({ width: 0, height: 0 });
+
+  React.useLayoutEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    const updateSize = () => {
+      const nextWidth = element.clientWidth;
+      const nextHeight = element.clientHeight;
+
+      setSize((prev) =>
+        prev.width === nextWidth && prev.height === nextHeight
+          ? prev
+          : { width: nextWidth, height: nextHeight },
+      );
+    };
+
+    updateSize();
+
+    const observer = new ResizeObserver(() => updateSize());
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <ChartContext.Provider value={{ config }}>
       <div
+        ref={containerRef}
         data-chart={chartId}
-        className={cn("min-w-0 min-h-0 text-xs", className)}
+        className={cn("min-w-0 min-h-[220px] text-xs", className)}
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer width="100%" height="100%" minWidth={0}>
-          {children}
-        </RechartsPrimitive.ResponsiveContainer>
+        {size.width > 0 && size.height > 0 ? (
+          <RechartsPrimitive.ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            minHeight={220}
+          >
+            {children}
+          </RechartsPrimitive.ResponsiveContainer>
+        ) : null}
       </div>
     </ChartContext.Provider>
   );
@@ -57,14 +90,12 @@ function ChartTooltipContent({
   active,
   payload,
   className,
-  indicator = "dot",
   hideLabel = false,
   label,
   labelFormatter,
 }: React.ComponentProps<"div"> & {
   active?: boolean;
   payload?: RechartsPrimitive.TooltipPayloadEntry[];
-  indicator?: "dot" | "line" | "dashed";
   hideLabel?: boolean;
   label?: string;
   labelFormatter?: (value: string | number, payload: RechartsPrimitive.TooltipPayloadEntry[]) => React.ReactNode;
@@ -81,14 +112,28 @@ function ChartTooltipContent({
       )}
       <div className="grid gap-1.5">
         {payload.map((item) => {
-          const itemConfig = config[item.dataKey as string];
+          const payloadName =
+            typeof item.name === "string"
+              ? item.name
+              : typeof item.payload === "object" &&
+                  item.payload !== null &&
+                  "name" in item.payload &&
+                  typeof item.payload.name === "string"
+                ? item.payload.name
+                : undefined;
+          const itemConfig =
+            (payloadName ? config[payloadName.toLowerCase()] : undefined) ??
+            config[item.dataKey as string];
+
           return (
             <div key={String(item.dataKey)} className="flex items-center gap-2">
               <div
                 className="shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)"
                 style={{ "--color-bg": item.color, "--color-border": item.color } as React.CSSProperties}
               />
-              <span className="text-muted-foreground">{String(itemConfig?.label || item.dataKey)}</span>
+              <span className="text-muted-foreground">
+                {String(itemConfig?.label || payloadName || item.dataKey)}
+              </span>
               <span className="ml-auto font-mono font-medium text-foreground">{typeof item.value === "number" ? item.value.toLocaleString() : String(item.value ?? "")}</span>
             </div>
           );

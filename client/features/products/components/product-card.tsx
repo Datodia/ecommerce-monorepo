@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
 	Card,
 	CardContent,
@@ -42,11 +43,16 @@ export function ProductCard({ product }: ProductCardProps) {
 	return (
 		<Card className="h-full justify-between border border-border/60 transition-colors hover:border-primary/30">
 			<Link href={`/products/${product.id}`} className="group block">
-				<img
-					src={product.thumbnail}
-					alt={product.name}
-					className="h-64 w-full bg-gray-100 object-contain p-4"
-				/>
+				<div className="relative h-64 w-full bg-gray-100">
+					<Image
+						src={product.thumbnail}
+						alt={product.name}
+						fill
+						unoptimized
+						className="object-contain p-4"
+						sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+					/>
+				</div>
 
 				<CardHeader className="space-y-2">
 					<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

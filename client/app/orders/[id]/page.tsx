@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { getOrderById } from "@/features/orders/services/order.service";
@@ -70,9 +71,12 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
 					{order.items.map((item) => (
 						<div key={item.id} className="flex items-center gap-3 rounded-lg border p-3">
 							{item.thumbnail ? (
-								<img
+								<Image
 									src={item.thumbnail}
 									alt={item.productName}
+									width={56}
+									height={56}
+									unoptimized
 									className="size-14 rounded-md border bg-muted object-contain p-1"
 								/>
 							) : (

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 
-import { AdminUser } from "@/features/dashboard/types/admin.types";
+import { AdminUser, DASHBOARD_PAGE_SIZE } from "@/features/dashboard/types/admin.types";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -18,6 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
+import { DeleteConfirmationModal } from "@/features/dashboard/components/delete-confirmation-modal";
+import { Pagination } from "@/features/dashboard/components/pagination";
 
 type UserFormState = {
   fullName: string;
@@ -43,6 +45,18 @@ export const DashboardUsersSection = ({
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<UserFormState>({ fullName: "", email: "", isAdmin: false });
   const [submitting, setSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const itemsPerPage = DASHBOARD_PAGE_SIZE;
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+  const safeCurrentPage = Math.min(currentPage, Math.max(totalPages, 1));
+  const paginatedUsers = users.slice(
+    (safeCurrentPage - 1) * itemsPerPage,
+    (safeCurrentPage - 1) * itemsPerPage + itemsPerPage,
+  );
 
   const setField = <K extends keyof UserFormState>(field: K, value: UserFormState[K]) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -51,6 +65,25 @@ export const DashboardUsersSection = ({
     setForm({ fullName: user.fullName, email: user.email, isAdmin: user.isAdmin });
     setEditId(user.id);
     setDialogOpen(true);
+  };
+
+  const handleDeleteClick = (user: AdminUser) => {
+    setUserToDelete(user);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return;
+    setDeleting(true);
+    try {
+      await onDeleteUser(userToDelete.id);
+      setDeleteConfirmOpen(false);
+      setUserToDelete(null);
+    } catch {
+      // toast shown by hook
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -94,7 +127,7 @@ export const DashboardUsersSection = ({
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {paginatedUsers.map((user) => (
                 <tr key={user.id} className="border-b transition-colors hover:bg-muted/50">
                   <td className="p-2 font-medium">{user.fullName}</td>
                   <td className="p-2 text-muted-foreground">{user.email}</td>
@@ -112,7 +145,7 @@ export const DashboardUsersSection = ({
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => onDeleteUser(user.id)}
+                        onClick={() => handleDeleteClick(user)}
                       >
                         <Trash2 className="mr-1 size-3" />
                         Delete
@@ -125,6 +158,24 @@ export const DashboardUsersSection = ({
           </table>
         </CardContent>
       </Card>
+
+      <Pagination
+        currentPage={safeCurrentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+        totalItems={users.length}
+      />
+
+      <DeleteConfirmationModal
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Delete User"
+        description="Are you sure you want to delete this user?"
+        itemName={userToDelete?.fullName}
+        isLoading={deleting}
+      />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>

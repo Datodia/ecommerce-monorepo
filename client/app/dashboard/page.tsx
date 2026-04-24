@@ -14,14 +14,16 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
+  let initialData;
+
   try {
-    const { user, initialData } = await getDashboardPageData(token);
+    const response = await getDashboardPageData(token);
+    const { user } = response;
 
     if (!user?.isAdmin) {
       redirect("/");
     }
-
-    return <DashboardClient initialData={initialData} />;
+    initialData = response.initialData;
   } catch (error) {
     const status = (error as { status?: number }).status;
     if (status === 401) {
@@ -30,4 +32,6 @@ export default async function DashboardPage() {
 
     throw error;
   }
+
+  return <DashboardClient initialData={initialData} />;
 }

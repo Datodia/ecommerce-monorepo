@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Category } from "../types/category";
@@ -12,7 +13,16 @@ export function CategoryCard({ category }: CategoryCardProps) {
   return (
     <Link href={`/products?category=${category.slug}`} className="group block h-full">
       <Card className="h-full overflow-hidden border border-border/60 transition-colors group-hover:border-primary/30">
-        <img src={imageSrc} alt={category.name} className="h-48 w-full bg-gray-100 object-contain p-4" />
+        <div className="relative h-48 w-full bg-gray-100">
+          <Image
+            src={imageSrc}
+            alt={category.name}
+            fill
+            unoptimized
+            className="object-contain p-4"
+            sizes="(max-width: 768px) 100vw, 33vw"
+          />
+        </div>
 
         <CardHeader className="space-y-2">
           <CardTitle className="line-clamp-1 text-base">{category.name}</CardTitle>

@@ -14,21 +14,6 @@ export class CategoryService {
     private readonly storageService: StorageService,
   ) {}
 
-  async onModuleInit() {
-    const resp = await fetch('https://api.escuelajs.co/api/v1/categories');
-    const categories = await resp.json();
-    const insetedCategories = categories.map((category: any) => ({
-      name: category.name,
-      slug: category.slug,
-      images: category.image,
-    }));
-
-    const count = await this.categoryRepo.count();
-    if (count === 0) {
-      await this.categoryRepo.insert(insetedCategories);
-    }
-  }
-
   async create(createCategoryDto: CreateCategoryDto) {
     const category = await this.categoryRepo.save(createCategoryDto);
     return category;

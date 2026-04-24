@@ -5,6 +5,7 @@ import { Product, ProductsResponse } from "@/features/products/types/product";
 import { http } from "@/shared/lib/http";
 import {
   AdminUser,
+  DASHBOARD_PAGE_SIZE,
   DashboardStats,
   PaginatedResponse,
 } from "@/features/dashboard/types/admin.types";
@@ -24,8 +25,8 @@ type CategoryMutationPayload = {
   images?: string;
 };
 
-export const getAdminProducts = async () => {
-  return http.get<ProductsResponse>("/products", { params: { page: 1, limit: 30 } });
+export const getAdminProducts = async (page = 1, limit = DASHBOARD_PAGE_SIZE) => {
+  return http.get<ProductsResponse>("/products", { params: { page, limit } });
 };
 
 export const createAdminProduct = async (payload: ProductMutationPayload) => {
@@ -47,9 +48,9 @@ export const deleteAdminProduct = async (id: string) => {
   return http.delete<Product>(`/products/${id}`);
 };
 
-export const getAdminCategories = async () => {
+export const getAdminCategories = async (page = 1, limit = DASHBOARD_PAGE_SIZE) => {
   return http.get<PaginatedResponse<Category>>("/categories", {
-    params: { page: 1, limit: 30 },
+    params: { page, limit },
   });
 };
 

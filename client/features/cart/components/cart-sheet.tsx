@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, Trash2 } from "lucide-react";
 
@@ -56,9 +57,12 @@ export const CartSheet = () => {
 					) : (
 						items.map((item) => (
 							<div key={item.productId} className="flex items-center gap-3 rounded-lg border p-3">
-								<img
+								<Image
 									src={item.thumbnail}
 									alt={item.name}
+									width={56}
+									height={56}
+									unoptimized
 									className="size-14 rounded-md border bg-muted object-contain p-1"
 								/>
 								<div className="min-w-0 flex-1">

@@ -48,7 +48,7 @@ const CartSync = ({ store }: { store: CartStoreApi }) => {
 					return;
 				}
 
-				let carts = await getMyCarts();
+				const carts = await getMyCarts();
 				let cart = carts[0];
 				if (!cart) {
 					cart = await createCart({ userId });

@@ -7,24 +7,18 @@ import { validateEnv } from './config/env.validation';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsModule } from './products/products.module';
 import { CategoryModule } from './categories/category.module';
-import { Category } from './categories/entities/category.entity';
-import { Product } from './products/entities/product.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { UsersModule } from './users/users.module';
-import { User } from './users/entities/user.entity';
 import { AuthModule } from './auth/auth.module';
 import { CartModule } from './cart/cart.module';
-import { Cart } from './cart/entities/cart.entity';
-import { CartItem } from './cart/entities/cart-item.entity';
 import { PaymentModule } from './payments/payment.module';
 import { OrdersModule } from './orders/orders.module';
-import { Order } from './orders/entities/order.entity';
-import { OrderItem } from './orders/entities/order-item.entity';
 import { NotificationModule } from './notification/notification.module';
 import { MailerModule } from '@nestjs-modules/mailer'
 import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
 import { StatisticsModule } from './statistics/statistics.module';
 import { StorageModule } from './storage/storage.module';
+import { createTypeOrmOptions } from './database/typeorm.config';
 
 @Module({
   imports: [
@@ -36,17 +30,7 @@ import { StorageModule } from './storage/storage.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        autoLoadEntities: true,
-        host: configService.get<string>('database.host'),
-        port: configService.get<number>('database.port'),
-        username: configService.get<string>('database.username'),
-        password: configService.get<string>('database.password'),
-        database: configService.get<string>('database.name'),
-        entities: [Category, Product, User, Cart, CartItem, Order, OrderItem],
-        synchronize: configService.get<string>('app.nodeEnv') !== 'production',
-      }),
+      useFactory: createTypeOrmOptions,
     }),
     MailerModule.forRootAsync({
       imports: [ConfigModule],

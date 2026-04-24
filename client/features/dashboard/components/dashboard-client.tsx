@@ -36,6 +36,11 @@ export const DashboardClient = ({ initialData }: DashboardClientProps) => {
           {dashboard.section === "products" && (
             <DashboardProductsSection
               products={dashboard.products}
+              currentPage={dashboard.productsPagination.page}
+              totalItems={dashboard.productsPagination.total}
+              totalPages={dashboard.productsPagination.last_page}
+              isLoading={dashboard.productsLoading}
+              onPageChange={dashboard.loadProducts}
               categories={dashboard.categories}
               onCreateProduct={dashboard.createProduct}
               onUpdateProduct={dashboard.updateProduct}
@@ -46,6 +51,11 @@ export const DashboardClient = ({ initialData }: DashboardClientProps) => {
           {dashboard.section === "categories" && (
             <DashboardCategoriesSection
               categories={dashboard.categories}
+              currentPage={dashboard.categoriesPagination.page}
+              totalItems={dashboard.categoriesPagination.total}
+              totalPages={dashboard.categoriesPagination.last_page}
+              isLoading={dashboard.categoriesLoading}
+              onPageChange={dashboard.loadCategories}
               onCreateCategory={dashboard.createCategory}
               onUpdateCategory={dashboard.updateCategory}
               onDeleteCategory={dashboard.deleteCategory}

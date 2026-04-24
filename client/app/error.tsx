@@ -2,13 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 
-export default function GlobalError({
-  error,
-  unstable_retry,
-}: {
-  error: Error & { digest?: string };
-  unstable_retry: () => void;
-}) {
+export default function Error({ unstable_retry }: { error: Error; unstable_retry: () => void }){
   return (
     <html>
       <body>

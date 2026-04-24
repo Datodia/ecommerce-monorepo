@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Upload, X } from "lucide-react";
@@ -7,6 +8,7 @@ import { Pencil, Plus, Trash2, Upload, X } from "lucide-react";
 import { Product } from "@/features/products/types/product";
 import { Category } from "@/features/categories/types/category";
 import { uploadFile } from "@/features/dashboard/services/admin.service";
+import { DASHBOARD_PAGE_SIZE } from "@/features/dashboard/types/admin.types";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -28,6 +30,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
+import { DeleteConfirmationModal } from "@/features/dashboard/components/delete-confirmation-modal";
+import { Pagination } from "@/features/dashboard/components/pagination";
 
 type ProductFormState = {
   name: string;
@@ -39,6 +43,11 @@ type ProductFormState = {
 
 type DashboardProductsSectionProps = {
   products: Product[];
+  currentPage: number;
+  totalItems: number;
+  totalPages: number;
+  isLoading?: boolean;
+  onPageChange: (page: number) => Promise<unknown>;
   categories: Category[];
   onCreateProduct: (payload: {
     name: string;
@@ -70,6 +79,11 @@ const defaultForm: ProductFormState = {
 
 export const DashboardProductsSection = ({
   products,
+  currentPage,
+  totalItems,
+  totalPages,
+  isLoading = false,
+  onPageChange,
   categories,
   onCreateProduct,
   onUpdateProduct,
@@ -81,6 +95,11 @@ export const DashboardProductsSection = ({
   const [form, setForm] = useState<ProductFormState>(defaultForm);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const itemsPerPage = DASHBOARD_PAGE_SIZE;
 
   const previewUrl = useMemo(
     () => (pendingFile ? URL.createObjectURL(pendingFile) : null),
@@ -122,6 +141,25 @@ export const DashboardProductsSection = ({
   const clearImage = () => {
     setPendingFile(null);
     setField("thumbnail", "");
+  };
+
+  const handleDeleteClick = (product: Product) => {
+    setProductToDelete(product);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
+    setDeleting(true);
+    try {
+      await onDeleteProduct(productToDelete.id);
+      setDeleteConfirmOpen(false);
+      setProductToDelete(null);
+    } catch {
+      // toast shown by hook
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -207,7 +245,7 @@ export const DashboardProductsSection = ({
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => onDeleteProduct(product.id)}
+                        onClick={() => handleDeleteClick(product)}
                       >
                         <Trash2 className="mr-1 size-3" />
                         Delete
@@ -216,10 +254,35 @@ export const DashboardProductsSection = ({
                   </td>
                 </tr>
               ))}
+              {products.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="p-6 text-center text-sm text-muted-foreground">
+                    {isLoading ? "Loading products..." : "No products found."}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </CardContent>
       </Card>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => void onPageChange(page)}
+        itemsPerPage={itemsPerPage}
+        totalItems={totalItems}
+      />
+
+      <DeleteConfirmationModal
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Product"
+        description="Are you sure you want to delete this product?"
+        itemName={productToDelete?.name}
+        isLoading={deleting}
+      />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -267,9 +330,12 @@ export const DashboardProductsSection = ({
               <Label>Thumbnail</Label>
               {(previewUrl || form.thumbnail) && (
                 <div className="relative w-fit">
-                  <img
+                  <Image
                     src={previewUrl ?? form.thumbnail}
                     alt="preview"
+                    width={80}
+                    height={80}
+                    unoptimized
                     className="h-20 w-20 rounded-md object-cover"
                   />
                   <button

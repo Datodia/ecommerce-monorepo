@@ -10,12 +10,15 @@ import {
   deleteAdminOrder,
   deleteAdminProduct,
   deleteAdminUser,
+  getAdminCategories,
+  getAdminProducts,
   updateAdminCategory,
   updateAdminOrder,
   updateAdminProduct,
   updateAdminUser,
 } from "@/features/dashboard/services/admin.service";
 import {
+  DASHBOARD_PAGE_SIZE,
   DashboardInitialData,
   DashboardSection,
   DashboardStats,
@@ -23,13 +26,37 @@ import {
 
 export const useDashboardManager = (initialData: DashboardInitialData) => {
   const [section, setSection] = useState<DashboardSection>("overview");
-  const [products, setProducts] = useState(initialData.products);
-  const [categories, setCategories] = useState(initialData.categories);
+  const [productsResponse, setProductsResponse] = useState(initialData.products);
+  const [categoriesResponse, setCategoriesResponse] = useState(initialData.categories);
   const [users, setUsers] = useState(initialData.users);
   const [orders, setOrders] = useState(initialData.orders);
   const [stats, setStats] = useState<DashboardStats>(initialData.stats);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
 
   const chartMax = Math.max(stats.users, stats.products, stats.categories, stats.orders, 1);
+
+  const loadProducts = async (page = productsResponse.page) => {
+    setProductsLoading(true);
+    try {
+      const nextProducts = await getAdminProducts(page, DASHBOARD_PAGE_SIZE);
+      setProductsResponse(nextProducts);
+      return nextProducts;
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  const loadCategories = async (page = categoriesResponse.page) => {
+    setCategoriesLoading(true);
+    try {
+      const nextCategories = await getAdminCategories(page, DASHBOARD_PAGE_SIZE);
+      setCategoriesResponse(nextCategories);
+      return nextCategories;
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
 
   const createProduct = async (payload: {
     name: string;
@@ -40,8 +67,8 @@ export const useDashboardManager = (initialData: DashboardInitialData) => {
     images?: string[];
   }) => {
     const created = await createAdminProduct(payload);
-    setProducts((prev) => [created, ...prev]);
     setStats((prev) => ({ ...prev, products: prev.products + 1 }));
+    await loadProducts(1);
     toast.success("Product created");
     return created;
   };
@@ -57,22 +84,29 @@ export const useDashboardManager = (initialData: DashboardInitialData) => {
     },
   ) => {
     const updated = await updateAdminProduct(id, payload);
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    setProductsResponse((prev) => ({
+      ...prev,
+      data: prev.data.map((product) => (product.id === updated.id ? updated : product)),
+    }));
     toast.success("Product updated");
     return updated;
   };
 
   const deleteProduct = async (id: string) => {
     await deleteAdminProduct(id);
-    setProducts((prev) => prev.filter((p) => p.id !== id));
     setStats((prev) => ({ ...prev, products: Math.max(0, prev.products - 1) }));
+    const nextPage =
+      productsResponse.data.length === 1 && productsResponse.page > 1
+        ? productsResponse.page - 1
+        : productsResponse.page;
+    await loadProducts(nextPage);
     toast.success("Product deleted");
   };
 
   const createCategory = async (payload: { name: string; slug: string; images?: string }) => {
     const created = await createAdminCategory(payload);
-    setCategories((prev) => [created, ...prev]);
     setStats((prev) => ({ ...prev, categories: prev.categories + 1 }));
+    await loadCategories(1);
     toast.success("Category created");
     return created;
   };
@@ -82,15 +116,22 @@ export const useDashboardManager = (initialData: DashboardInitialData) => {
     payload: { name?: string; slug?: string; images?: string },
   ) => {
     const updated = await updateAdminCategory(id, payload);
-    setCategories((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    setCategoriesResponse((prev) => ({
+      ...prev,
+      data: prev.data.map((category) => (category.id === updated.id ? updated : category)),
+    }));
     toast.success("Category updated");
     return updated;
   };
 
   const deleteCategory = async (id: string) => {
     await deleteAdminCategory(id);
-    setCategories((prev) => prev.filter((c) => c.id !== id));
     setStats((prev) => ({ ...prev, categories: Math.max(0, prev.categories - 1) }));
+    const nextPage =
+      categoriesResponse.data.length === 1 && categoriesResponse.page > 1
+        ? categoriesResponse.page - 1
+        : categoriesResponse.page;
+    await loadCategories(nextPage);
     toast.success("Category deleted");
   };
 
@@ -135,8 +176,14 @@ export const useDashboardManager = (initialData: DashboardInitialData) => {
   return {
     section,
     setSection,
-    products,
-    categories,
+    products: productsResponse.data,
+    productsPagination: productsResponse,
+    productsLoading,
+    loadProducts,
+    categories: categoriesResponse.data,
+    categoriesPagination: categoriesResponse,
+    categoriesLoading,
+    loadCategories,
     users,
     orders,
     stats,

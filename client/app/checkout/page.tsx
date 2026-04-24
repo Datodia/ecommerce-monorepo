@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Suspense, useEffect, useRef } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -111,9 +112,12 @@ export default function CheckoutPage() {
 									key={item.productId}
 									className="flex items-center gap-3 rounded-lg border bg-background p-3"
 								>
-									<img
+									<Image
 										src={item.thumbnail}
 										alt={item.name}
+										width={56}
+										height={56}
+										unoptimized
 										className="size-14 rounded-md border bg-muted object-contain p-1"
 									/>
 									<div className="min-w-0 flex-1">
